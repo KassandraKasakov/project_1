@@ -20,13 +20,15 @@ struct Tile {
     int value;
     char name;
     bool walkable = true;
+    bool victory = false;
 };
 
 const Tile ground = { 0, '.' };
 const Tile water = { 1, '~' };
 const Tile mountain = { 2, 'M', false };
+const Tile door = { -1, 'E', true, true};
 
-Tile const tiles[3] = { ground, water, mountain };
+Tile const tiles[4] = { door, ground, water, mountain };
 
 
 
@@ -57,7 +59,7 @@ void afficherMap(int map[10][20], Entity player, Mob enemies[5]) {
 
             // Affichage Map
             else {
-                for (int t = 0; t < 3; t++) {
+                for (int t = 0; t < 4; t++) {
                     if (map[ligne][colonne] == tiles[t].value)
                         std::cout << tiles[t].name << ' ';
                 }
@@ -78,7 +80,7 @@ void updatePlayer(Entity& player, char order, int map[10][20]) {
 
     // Déplacements (droite / gauche / haut / bas)
     if (order == 'd' and player.y + 1 <= 19) {
-        for (int t = 0; t < 3; t++) {
+        for (int t = 0; t < 4; t++) {
             if (map[player.x][player.y + 1] == tiles[t].value and tiles[t].walkable) {
                 player.y += 1;
                 break;
@@ -86,7 +88,7 @@ void updatePlayer(Entity& player, char order, int map[10][20]) {
         }
     }
     else if (order == 'q' and player.y - 1 >= 0) {
-        for (int t = 0; t < 3; t++) {
+        for (int t = 0; t < 4; t++) {
             if (map[player.x][player.y - 1] == tiles[t].value and tiles[t].walkable) {
                 player.y -= 1;
                 break;
@@ -94,7 +96,7 @@ void updatePlayer(Entity& player, char order, int map[10][20]) {
         }
     }
     else if (order == 'z' and player.x - 1 >= 0) {
-        for (int t = 0; t < 3; t++) {
+        for (int t = 0; t < 4; t++) {
             if (map[player.x - 1][player.y] == tiles[t].value and tiles[t].walkable) {
                 player.x -= 1;
                 break;
@@ -102,7 +104,7 @@ void updatePlayer(Entity& player, char order, int map[10][20]) {
         }
     }
     else if (order == 's' and player.x + 1 <= 9) {
-        for (int t = 0; t < 3; t++) {
+        for (int t = 0; t < 4; t++) {
             if (map[player.x + 1][player.y] == tiles[t].value and tiles[t].walkable) {
                 player.x += 1;
                 break;
@@ -110,8 +112,15 @@ void updatePlayer(Entity& player, char order, int map[10][20]) {
         }
     }
 
+    // Victory Tile ?
+    for (int t = 0; t < 4; t++) {
+        if (map[player.x][player.y] == tiles[t].value and tiles[t].victory) {
+            player.health = -1;
+        }
+    }
+
     // Reset (tue le joueur)
-    else if (order == 'r') {
+    if (order == 'r') {
         player.health = 0;
     }
 }
@@ -139,7 +148,7 @@ void updateEnemies(Mob enemies[5], int map[10][20]) {
 
         // Déplacements aléatoires (0 Haut / 1 Bas / 2 Droite / 3 Gauche)
         if (random == 0 and enemies[i].enemy.x - 1 >= 0) {
-            for (int t = 0; t < 3; t++) {
+            for (int t = 0; t < 4; t++) {
                 if (map[enemies[i].enemy.x - 1][enemies[i].enemy.y] == tiles[t].value and tiles[t].walkable) {
                     if (isOtherEnemy(enemies, t, enemies[i].enemy.x - 1, enemies[i].enemy.y)) {
                         enemies[i].enemy.x -= 1;
@@ -149,7 +158,7 @@ void updateEnemies(Mob enemies[5], int map[10][20]) {
             }
         }
         else if (random == 1 and enemies[i].enemy.x + 1 <= 9) {
-            for (int t = 0; t < 3; t++) {
+            for (int t = 0; t < 4; t++) {
                 if (map[enemies[i].enemy.x + 1][enemies[i].enemy.y] == tiles[t].value and tiles[t].walkable) {
                     if (isOtherEnemy(enemies, t, enemies[i].enemy.x + 1, enemies[i].enemy.y)) {
                         enemies[i].enemy.x += 1;
@@ -159,7 +168,7 @@ void updateEnemies(Mob enemies[5], int map[10][20]) {
             }
         }
         else if (random == 2 and enemies[i].enemy.y + 1 <= 19) {
-            for (int t = 0; t < 3; t++) {
+            for (int t = 0; t < 4; t++) {
                 if (map[enemies[i].enemy.x][enemies[i].enemy.y + 1] == tiles[t].value and tiles[t].walkable) {
                     if (isOtherEnemy(enemies, t, enemies[i].enemy.x, enemies[i].enemy.y + 1)) {
                         enemies[i].enemy.y += 1;
@@ -169,7 +178,7 @@ void updateEnemies(Mob enemies[5], int map[10][20]) {
             }
         }
         else if (random == 3 and enemies[i].enemy.y - 1 >= 0) {
-            for (int t = 0; t < 3; t++) {
+            for (int t = 0; t < 4; t++) {
                 if (map[enemies[i].enemy.x][enemies[i].enemy.y - 1] == tiles[t].value and tiles[t].walkable) {
                     if (isOtherEnemy(enemies, t, enemies[i].enemy.x, enemies[i].enemy.y - 1)) {
                         enemies[i].enemy.y -= 1;
@@ -203,17 +212,31 @@ int main()
     srand(time(0));
 
     int map[10][20] = {
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,2,2,0,0,0,0,1,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,2,2,0,0,0,0,1,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,2,2,0,0,0,0,1,1,1,1,1},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,2,2,2},
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,-1,2},
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,2},
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,2},
+        {0,0,0,0,0,0,0,0,0,2,2,1,1,1,1,0,0,0,0,2},
+        {1,1,1,0,0,0,0,0,0,2,2,1,1,0,0,0,0,0,0,2},
+        {0,0,1,1,1,1,0,0,0,2,2,1,1,1,1,1,1,1,1,2},
+        {0,0,0,0,0,1,1,0,0,0,1,1,1,1,0,0,0,0,0,2},
+        {0,0,0,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,2},
+        {0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,2,2,2,2,2}
+    };
+
+    int map2[10][20] = {
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
     };
+
 
     Entity player = { 2, 4, 1, 'H'};
 
@@ -243,7 +266,12 @@ int main()
 
         afficherMap(map, player, enemies);
 
+        if (player.health == -1) {
+            return 1;
+        }
+
     }
+
     gameOver();
     return 0;
 }
