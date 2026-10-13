@@ -45,18 +45,38 @@ void afficherMap(int map[10][20], Mob player) {
 }
 
 
-void updatePlayer(Mob& player, char order) {
+void updatePlayer(Mob& player, char order, int map[10][20]) {
     if (order == 'd' and player.y + 1 <= 19) {
-        player.y += 1;
+        for (int t = 0; t < 3; t++) {
+            if (map[player.x][player.y + 1] == tiles[t].value and tiles[t].walkable) {
+                player.y += 1;
+                break;
+            }
+        }
     }
     else if (order == 'q' and player.y - 1 >= 0) {
-        player.y -= 1;
+        for (int t = 0; t < 3; t++) {
+            if (map[player.x][player.y - 1] == tiles[t].value and tiles[t].walkable) {
+                player.y -= 1;
+                break;
+            }
+        }
     }
     else if (order == 'z' and player.x - 1 >= 0) {
-        player.x -= 1;
+        for (int t = 0; t < 3; t++) {
+            if (map[player.x - 1][player.y] == tiles[t].value and tiles[t].walkable) {
+                player.x -= 1;
+                break;
+            }
+        }
     }
     else if (order == 's' and player.x + 1 <= 9) {
-        player.x += 1;
+        for (int t = 0; t < 3; t++) {
+            if (map[player.x + 1][player.y] == tiles[t].value and tiles[t].walkable) {
+                player.x += 1;
+                break;
+            }
+        }
     }
     else if (order == 'r') {
         player.health = 0;
@@ -91,7 +111,7 @@ int main()
 
         std::cin >> order;
 
-        updatePlayer(player, order);
+        updatePlayer(player, order, map);
 
 
     }
