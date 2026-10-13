@@ -35,17 +35,19 @@ void afficherMap(int map[10][20], Entity player, Mob enemies[5]) {
         for (int colonne = 0; colonne < 20; ++colonne) {
 
             // Detection enemis
-            bool enemy = false;
+            bool isenemy = false;
+            int whenenemy;
 
             for (int i = 0; i < 5; i++) {
                 if (ligne == enemies[i].enemy.x and colonne == enemies[i].enemy.y) {
-                    enemy = true;
+                    isenemy = true;
+                    whenenemy = i;
                 }
             }
 
             // Affichage enemis
-            if (enemy) {
-                std::cout << 'X' << ' ';
+            if (isenemy) {
+                std::cout << enemies[whenenemy].enemy.name << ' ';
             }
 
             // Affichage joueur
@@ -115,43 +117,64 @@ void updatePlayer(Entity& player, char order, int map[10][20]) {
 }
 
 
+bool isOtherEnemy(Mob enemies[5], int time, int current_x, int current_y) {
+    for (int i = 0; i < 5; i++) {
+        if (i != time) {
+            if (enemies[i].enemy.x == current_x and enemies[i].enemy.y == current_y) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
 void updateEnemies(Mob enemies[5], int map[10][20]) {
+    int random;
+
     for (int i = 0; i < 5; i++) {
 
-        srand(time(0));
 
-        int random = rand() % 3;
+        random = rand() % 4;
 
         // Déplacements aléatoires (0 Haut / 1 Bas / 2 Droite / 3 Gauche)
-        if (random == 0 and enemies[i].enemy.x - 1 <= 0) {
+        if (random == 0 and enemies[i].enemy.x - 1 >= 0) {
             for (int t = 0; t < 3; t++) {
                 if (map[enemies[i].enemy.x - 1][enemies[i].enemy.y] == tiles[t].value and tiles[t].walkable) {
-                    enemies[i].enemy.x -= 1;
-                    break;
+                    if (isOtherEnemy(enemies, t, enemies[i].enemy.x - 1, enemies[i].enemy.y)) {
+                        enemies[i].enemy.x -= 1;
+                        break;
+                    }
                 }
             }
         }
         else if (random == 1 and enemies[i].enemy.x + 1 <= 9) {
             for (int t = 0; t < 3; t++) {
                 if (map[enemies[i].enemy.x + 1][enemies[i].enemy.y] == tiles[t].value and tiles[t].walkable) {
-                    enemies[i].enemy.x += 1;
-                    break;
+                    if (isOtherEnemy(enemies, t, enemies[i].enemy.x + 1, enemies[i].enemy.y)) {
+                        enemies[i].enemy.x += 1;
+                        break;
+                    }
                 }
             }
         }
         else if (random == 2 and enemies[i].enemy.y + 1 <= 19) {
             for (int t = 0; t < 3; t++) {
                 if (map[enemies[i].enemy.x][enemies[i].enemy.y + 1] == tiles[t].value and tiles[t].walkable) {
-                    enemies[i].enemy.y += 1;
-                    break;
+                    if (isOtherEnemy(enemies, t, enemies[i].enemy.x, enemies[i].enemy.y + 1)) {
+                        enemies[i].enemy.y += 1;
+                        break;
+                    }
                 }
             }
         }
-        else if (random == 3 and enemies[i].enemy.y - 1 <= 0) {
+        else if (random == 3 and enemies[i].enemy.y - 1 >= 0) {
             for (int t = 0; t < 3; t++) {
                 if (map[enemies[i].enemy.x][enemies[i].enemy.y - 1] == tiles[t].value and tiles[t].walkable) {
-                    enemies[i].enemy.y -= 1;
-                    break;
+                    if (isOtherEnemy(enemies, t, enemies[i].enemy.x, enemies[i].enemy.y - 1)) {
+                        enemies[i].enemy.y -= 1;
+                        break;
+                    }
                 }
             }
         }
@@ -176,6 +199,9 @@ void gameOver() {
 
 int main()
 {
+
+    srand(time(0));
+
     int map[10][20] = {
         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0},
         {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0},
@@ -216,7 +242,6 @@ int main()
         system("cls");
 
         afficherMap(map, player, enemies);
-
 
     }
     gameOver();
