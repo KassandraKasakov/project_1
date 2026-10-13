@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
 
 
 
@@ -11,6 +13,7 @@ struct Entity {
 
 struct Mob {
     Entity enemy;
+    int damage;
 };
 
 struct Tile {
@@ -24,6 +27,7 @@ const Tile water = { 1, '~' };
 const Tile mountain = { 2, 'M', false };
 
 Tile const tiles[3] = { ground, water, mountain };
+
 
 
 void afficherMap(int map[10][20], Entity player, Mob enemies[5]) {
@@ -111,12 +115,62 @@ void updatePlayer(Entity& player, char order, int map[10][20]) {
 }
 
 
+void updateEnemies(Mob enemies[5], int map[10][20]) {
+    for (int i = 0; i < 5; i++) {
+
+        srand(time(0));
+
+        int random = rand() % 3;
+
+        // Déplacements aléatoires (0 Haut / 1 Bas / 2 Droite / 3 Gauche)
+        if (random == 0 and enemies[i].enemy.x - 1 <= 0) {
+            for (int t = 0; t < 3; t++) {
+                if (map[enemies[i].enemy.x - 1][enemies[i].enemy.y] == tiles[t].value and tiles[t].walkable) {
+                    enemies[i].enemy.x -= 1;
+                    break;
+                }
+            }
+        }
+        else if (random == 1 and enemies[i].enemy.x + 1 <= 9) {
+            for (int t = 0; t < 3; t++) {
+                if (map[enemies[i].enemy.x + 1][enemies[i].enemy.y] == tiles[t].value and tiles[t].walkable) {
+                    enemies[i].enemy.x += 1;
+                    break;
+                }
+            }
+        }
+        else if (random == 2 and enemies[i].enemy.y + 1 <= 19) {
+            for (int t = 0; t < 3; t++) {
+                if (map[enemies[i].enemy.x][enemies[i].enemy.y + 1] == tiles[t].value and tiles[t].walkable) {
+                    enemies[i].enemy.y += 1;
+                    break;
+                }
+            }
+        }
+        else if (random == 3 and enemies[i].enemy.y - 1 <= 0) {
+            for (int t = 0; t < 3; t++) {
+                if (map[enemies[i].enemy.x][enemies[i].enemy.y - 1] == tiles[t].value and tiles[t].walkable) {
+                    enemies[i].enemy.y -= 1;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
 void collision(Entity& player, Mob enemies[5]) {
     for (int i = 0; i < 5; i++) {
         if (player.x == enemies[i].enemy.x and player.y == enemies[i].enemy.y) {
-            player.health = 0;
+            player.health -= enemies[i].damage;
         }
     }
+}
+
+
+void gameOver() {
+    system("cls");
+    std::cout << '\n' << " Game Over\n Vous avez péri !" << std::endl;
 }
 
 
@@ -138,11 +192,11 @@ int main()
     Entity player = { 2, 4, 1, 'H'};
 
     Mob enemies[5] = {
-        {2, 10, 1, 'X'},
-        {9, 1, 1, 'X'},
-        {0, 0, 1, 'X'},
-        {4, 15, 1, 'X'},
-        {9, 19, 1, 'X'},
+        {2, 10, 1, 'X', 1},
+        {7, 1, 1, 'X', 1},
+        {1, 1, 1, 'X', 1},
+        {4, 17, 1, 'X', 1},
+        {8, 18, 1, 'X', 1},
     };
 
     char order;
@@ -150,10 +204,12 @@ int main()
 
     afficherMap(map, player, enemies);
 
+    // Boucle de jeu
     while (player.health != 0) {
 
         std::cin >> order;
 
+        updateEnemies(enemies, map);
         updatePlayer(player, order, map);
         collision(player, enemies);
 
@@ -162,8 +218,7 @@ int main()
         afficherMap(map, player, enemies);
 
 
-
-
     }
+    gameOver();
     return 0;
 }
