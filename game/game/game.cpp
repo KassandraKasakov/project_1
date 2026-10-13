@@ -23,9 +23,9 @@ struct Tile {
     bool victory = false;
 };
 
-const Tile ground = { 0, '.' };
-const Tile water = { 1, '~' };
-const Tile mountain = { 2, 'M', false };
+const Tile ground = { 0, '.'};
+const Tile water = { 1, '~'};
+const Tile mountain = { 2, 'M', false};
 const Tile door = { -1, 'E', true, true};
 
 Tile const tiles[4] = { door, ground, water, mountain };
@@ -76,7 +76,7 @@ void afficherMap(int map[10][20], Entity player, Mob enemies[5]) {
 }
 
 
-void updatePlayer(Entity& player, char order, int map[10][20]) {
+void updatePlayer(Entity& player, char order, int map[10][20], bool &victory) {
 
     // Déplacements (droite / gauche / haut / bas)
     if (order == 'd' and player.y + 1 <= 19) {
@@ -113,11 +113,11 @@ void updatePlayer(Entity& player, char order, int map[10][20]) {
     }
 
     // Victory Tile ?
-    for (int t = 0; t < 4; t++) {
-        if (map[player.x][player.y] == tiles[t].value and tiles[t].victory) {
-            player.health = -1;
+        if (map[player.x][player.y] == -1) {
+
+            std::cout << " BRAVO";
+            victory = true;
         }
-    }
 
     // Reset (tue le joueur)
     if (order == 'r') {
@@ -249,29 +249,65 @@ int main()
     };
 
     char order;
-
+    int currentMap = 1;
+    bool victory = false;
 
     afficherMap(map, player, enemies);
 
     // Boucle de jeu
-    while (player.health != 0) {
 
+    // LEVEL 1
+    while (!victory) {
+
+        std::cout << " non";
         std::cin >> order;
 
+
         updateEnemies(enemies, map);
-        updatePlayer(player, order, map);
+        updatePlayer(player, order, map, victory);
         collision(player, enemies);
 
         system("cls");
 
         afficherMap(map, player, enemies);
 
-        if (player.health == -1) {
-            return 1;
+        if (player.health == 0) {
+            gameOver();
+            return 0;
         }
+    }
+    std::cout << " BRAVO";
+    victory = false;
 
+    player.x = 2;
+    player.y = 4;
+
+    enemies[0].enemy.x = 2;
+    enemies[0].enemy.y = 10;
+
+    for (int i = 1; i < 5; i++) {
+        enemies[i].enemy.x = -10;
+        enemies[i].enemy.y = -10;
     }
 
-    gameOver();
-    return 0;
+    // LEVEL 2
+    while (!victory) {
+
+        std::cin >> order;
+
+
+        updateEnemies(enemies, map2);
+        updatePlayer(player, order, map2, victory);
+        collision(player, enemies);
+
+        system("cls");
+
+        afficherMap(map2, player, enemies);
+
+        if (player.health == 0) {
+            gameOver();
+            return 0;
+        }
+    }
+    return 1;
 }
