@@ -1,8 +1,13 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <curses.h>
 
-
+struct Map {
+    int* data;
+    int width;
+    int height;
+};
 
 struct Entity {
     int x;
@@ -16,25 +21,40 @@ struct Mob {
     int damage;
 };
 
+enum Tile_Type
+{
+    Ground = 0,
+    Water = 1,
+    Mountain = 2,
+    Door = 3
+};
 struct Tile {
-    int value;
     char name;
     bool walkable = true;
     bool victory = false;
 };
 
-const Tile ground = { 0, '.'};
-const Tile water = { 1, '~'};
-const Tile mountain = { 2, 'M', false};
-const Tile door = { -1, 'E', true, true};
+const Tile ground = {'.'};
+const Tile water = {'~'};
+const Tile mountain = {'M', false};
+const Tile door = {'E', true, true};
 
-Tile const tiles[4] = { door, ground, water, mountain };
+Tile const tiles[4] = {ground, water, mountain, door };
 
 
 
-void afficherMap(int map[10][20], Entity player, Mob enemies[5]) {
+int getCell(int x, int y, int columnMax)
+{
+    return y * columnMax + x;
+}
+
+
+void afficherMap(int map[], Entity player, Mob enemies[5]) {
+
     for (int ligne = 0; ligne < 10; ++ligne) {
         for (int colonne = 0; colonne < 20; ++colonne) {
+
+            int index = getCell(colonne, ligne, 20);
 
             // Detection enemis
             bool isenemy = false;
@@ -60,7 +80,7 @@ void afficherMap(int map[10][20], Entity player, Mob enemies[5]) {
             // Affichage Map
             else {
                 for (int t = 0; t < 4; t++) {
-                    if (map[ligne][colonne] == tiles[t].value)
+                    if (map[index] == tiles[t].value)
                         std::cout << tiles[t].name << ' ';
                 }
             }
@@ -76,46 +96,38 @@ void afficherMap(int map[10][20], Entity player, Mob enemies[5]) {
 }
 
 
-void updatePlayer(Entity& player, char order, int map[10][20], bool &victory) {
+void updatePlayer(Entity& player, char order, int map[], bool &victory) {
 
-    // Déplacements (droite / gauche / haut / bas)
-    if (order == 'd' and player.y + 1 <= 19) {
-        for (int t = 0; t < 4; t++) {
-            if (map[player.x][player.y + 1] == tiles[t].value and tiles[t].walkable) {
-                player.y += 1;
-                break;
-            }
-        }
+    int xDir = 0;
+    int yDir = 0;
+    switch (order)
+    {
+        case 'd':
+            xDir = 1;
+            break;
+        case 'q':
+            xDir = -1;
+            break;
+        case 'z':
+            yDir = 1;
+            break;
+        case 's':
+            yDir = -1;
+            break;
     }
-    else if (order == 'q' and player.y - 1 >= 0) {
-        for (int t = 0; t < 4; t++) {
-            if (map[player.x][player.y - 1] == tiles[t].value and tiles[t].walkable) {
-                player.y -= 1;
-                break;
-            }
-        }
+    int newX = player.x + xDir;
+    int newY = player.y + yDir;
+
+    int tileType = map[getCell(newX, newY, 20)];
+    if (tiles[tileType].walkable)
+    {
+        player.x = newX;
+        player.y = newY;
     }
-    else if (order == 'z' and player.x - 1 >= 0) {
-        for (int t = 0; t < 4; t++) {
-            if (map[player.x - 1][player.y] == tiles[t].value and tiles[t].walkable) {
-                player.x -= 1;
-                break;
-            }
-        }
-    }
-    else if (order == 's' and player.x + 1 <= 9) {
-        for (int t = 0; t < 4; t++) {
-            if (map[player.x + 1][player.y] == tiles[t].value and tiles[t].walkable) {
-                player.x += 1;
-                break;
-            }
-        }
-    }
+    
 
     // Victory Tile ?
-        if (map[player.x][player.y] == -1) {
-
-            std::cout << " BRAVO";
+        if (map[getCell(player.x, player.y, 20)] == -1) {
             victory = true;
         }
 
@@ -138,7 +150,7 @@ bool isOtherEnemy(Mob enemies[5], int time, int current_x, int current_y) {
 }
 
 
-void updateEnemies(Mob enemies[5], int map[10][20]) {
+void updateEnemies(Mob enemies[5], int map[]) {
     int random;
 
     for (int i = 0; i < 5; i++) {
@@ -149,7 +161,7 @@ void updateEnemies(Mob enemies[5], int map[10][20]) {
         // Déplacements aléatoires (0 Haut / 1 Bas / 2 Droite / 3 Gauche)
         if (random == 0 and enemies[i].enemy.x - 1 >= 0) {
             for (int t = 0; t < 4; t++) {
-                if (map[enemies[i].enemy.x - 1][enemies[i].enemy.y] == tiles[t].value and tiles[t].walkable) {
+                if (map[getCell(enemies[t].enemy.x - 1, enemies[t].enemy.y, 20)] == tiles[t].value and tiles[t].walkable) {
                     if (isOtherEnemy(enemies, t, enemies[i].enemy.x - 1, enemies[i].enemy.y)) {
                         enemies[i].enemy.x -= 1;
                         break;
@@ -159,7 +171,7 @@ void updateEnemies(Mob enemies[5], int map[10][20]) {
         }
         else if (random == 1 and enemies[i].enemy.x + 1 <= 9) {
             for (int t = 0; t < 4; t++) {
-                if (map[enemies[i].enemy.x + 1][enemies[i].enemy.y] == tiles[t].value and tiles[t].walkable) {
+                if (map[getCell(enemies[t].enemy.x + 1, enemies[t].enemy.y, 20)] == tiles[t].value and tiles[t].walkable) {
                     if (isOtherEnemy(enemies, t, enemies[i].enemy.x + 1, enemies[i].enemy.y)) {
                         enemies[i].enemy.x += 1;
                         break;
@@ -169,7 +181,7 @@ void updateEnemies(Mob enemies[5], int map[10][20]) {
         }
         else if (random == 2 and enemies[i].enemy.y + 1 <= 19) {
             for (int t = 0; t < 4; t++) {
-                if (map[enemies[i].enemy.x][enemies[i].enemy.y + 1] == tiles[t].value and tiles[t].walkable) {
+                if (map[getCell(enemies[t].enemy.x, enemies[t].enemy.y + 1, 20)] == tiles[t].value and tiles[t].walkable) {
                     if (isOtherEnemy(enemies, t, enemies[i].enemy.x, enemies[i].enemy.y + 1)) {
                         enemies[i].enemy.y += 1;
                         break;
@@ -179,7 +191,7 @@ void updateEnemies(Mob enemies[5], int map[10][20]) {
         }
         else if (random == 3 and enemies[i].enemy.y - 1 >= 0) {
             for (int t = 0; t < 4; t++) {
-                if (map[enemies[i].enemy.x][enemies[i].enemy.y - 1] == tiles[t].value and tiles[t].walkable) {
+                if (map[getCell(enemies[t].enemy.x, enemies[t].enemy.y - 1, 20)] == tiles[t].value and tiles[t].walkable) {
                     if (isOtherEnemy(enemies, t, enemies[i].enemy.x, enemies[i].enemy.y - 1)) {
                         enemies[i].enemy.y -= 1;
                         break;
@@ -211,7 +223,23 @@ int main()
 
     srand(time(0));
 
-    int map[10][20] = {
+    int rowMax = 10;
+    int columnMax = 20;
+
+    int map[200] = {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,2,2,2,
+        0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,3,2,
+        0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,2,
+        0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,2,
+        0,0,0,0,0,0,0,0,0,2,2,1,1,1,1,0,0,0,0,2,
+        1,1,1,0,0,0,0,0,0,2,2,1,1,0,0,0,0,0,0,2,
+        0,0,1,1,1,1,0,0,0,2,2,1,1,1,1,1,1,1,1,2,
+        0,0,0,0,0,1,1,0,0,0,1,1,1,1,0,0,0,0,0,2,
+        0,0,0,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,2,
+        0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,2,2,2,2,2
+    };
+
+    int map1[10][20] = {
         {0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,2,2,2},
         {0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,-1,2},
         {0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,2},
@@ -224,19 +252,7 @@ int main()
         {0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,2,2,2,2,2}
     };
 
-    int map2[10][20] = {
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-    };
-
+    int currentMap = 0;
 
     Entity player = { 2, 4, 1, 'H'};
 
@@ -249,19 +265,16 @@ int main()
     };
 
     char order;
-    int currentMap = 1;
     bool victory = false;
 
-    afficherMap(map, player, enemies);
 
     // Boucle de jeu
 
-    // LEVEL 1
-    while (!victory) {
+    afficherMap(map, player, enemies);
 
-        std::cout << " non";
+    while (player.health != 0) {
+
         std::cin >> order;
-
 
         updateEnemies(enemies, map);
         updatePlayer(player, order, map, victory);
@@ -271,43 +284,18 @@ int main()
 
         afficherMap(map, player, enemies);
 
-        if (player.health == 0) {
-            gameOver();
-            return 0;
+        if (victory) {
+            victory = false;
+            currentMap += 1;
+            return 1;
         }
+
     }
-    std::cout << " BRAVO";
     victory = false;
 
-    player.x = 2;
-    player.y = 4;
-
-    enemies[0].enemy.x = 2;
-    enemies[0].enemy.y = 10;
-
-    for (int i = 1; i < 5; i++) {
-        enemies[i].enemy.x = -10;
-        enemies[i].enemy.y = -10;
-    }
-
-    // LEVEL 2
-    while (!victory) {
-
-        std::cin >> order;
-
-
-        updateEnemies(enemies, map2);
-        updatePlayer(player, order, map2, victory);
-        collision(player, enemies);
-
-        system("cls");
-
-        afficherMap(map2, player, enemies);
-
-        if (player.health == 0) {
-            gameOver();
-            return 0;
-        }
+    if (player.health == 0) {
+        gameOver();
+        return 0;
     }
     return 1;
 }
