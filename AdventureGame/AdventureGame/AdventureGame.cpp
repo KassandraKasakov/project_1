@@ -48,12 +48,12 @@ int getCell(int x, int y, int columnMax)
 }
 
 
-void afficherMap(int map[], Entity player, Entity enemies[5]) {
+void afficherMap(Map map, Entity player, Entity enemies[5]) {
 
-    for (int y = 0; y < 10; ++y) {
-        for (int x = 0; x < 20; ++x) {
+    for (int y = 0; y < map.width; ++y) {
+        for (int x = 0; x < map.height; ++x) {
 
-            int index = getCell(x, y, 20);
+            int index = getCell(x, y, map.height);
 
             // Detection enemis
             bool isenemy = false;
@@ -79,7 +79,7 @@ void afficherMap(int map[], Entity player, Entity enemies[5]) {
             // Affichage Map
             else {
                 for (int t = 0; t < 4; t++) {
-                    if (map[index] == Tile_Type(t))
+                    if (map.data[index] == Tile_Type(t))
                         std::cout << tiles[t].name << ' ';
                 }
             }
@@ -95,18 +95,18 @@ void afficherMap(int map[], Entity player, Entity enemies[5]) {
 }
 
 
-bool IsInMap(int x, int y) {
-    if (x < 0 or x > 19) {
+bool IsInMap(int x, int y, Map map) {
+    if (x < 0 or x > map.height - 1) {
         return false;
     }
-    if (y < 0 or y > 9) {
+    if (y < 0 or y > map.width - 1) {
         return false;
     }
     return true;
 }
 
 
-void UpdatePlayer(Entity& player, int map[], char order) {
+void UpdatePlayer(Entity& player, Map map, char order) {
 
     int xDir = 0;
     int yDir = 0;
@@ -130,9 +130,9 @@ void UpdatePlayer(Entity& player, int map[], char order) {
     int newX = player.x + xDir;
     int newY = player.y + yDir;
 
-    if (IsInMap(newX, newY)) {
+    if (IsInMap(newX, newY, map)) {
 
-        int tileType = map[getCell(newX, newY, 20)];
+        int tileType = map.data[getCell(newX, newY, 20)];
         if (tiles[tileType].walkable)
         {
             player.x = newX;
@@ -142,7 +142,7 @@ void UpdatePlayer(Entity& player, int map[], char order) {
 }
 
 
-void UpdateEnnemies(Entity ennemies[], int map[]) {
+void UpdateEnnemies(Entity ennemies[], Map map) {
 
 
     int random;
@@ -188,9 +188,9 @@ void UpdateEnnemies(Entity ennemies[], int map[]) {
             int newX = ennemies[i].x + xDir;
             int newY = ennemies[i].y + yDir;
 
-            if (IsInMap(newX, newY)) {
+            if (IsInMap(newX, newY, map)) {
 
-                int tileType = map[getCell(newX, newY, 20)];
+                int tileType = map.data[getCell(newX, newY, 20)];
                 if (tiles[tileType].walkable)
                 {
                     ennemies[i].x = newX;
@@ -211,6 +211,15 @@ void Collision(Entity& player, Entity ennemies[5]) {
 }
 
 
+void IsOnExit(Entity player, Map map, bool& victory) {
+    int PlayerCell = getCell(player.x, player.y, map.height);
+    if (map.data[PlayerCell] == 3)
+    {
+        victory = true;
+    }
+}
+
+
 int main()
 {
     srand(time(0));
@@ -218,18 +227,39 @@ int main()
     int rowMax = 10;
     int columnMax = 20;
 
-    int map[200] = {
-        0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,3,0,
-        0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,2,
-        0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,2,
-        0,0,0,0,0,0,0,0,0,2,2,1,1,1,1,0,0,0,0,2,
-        1,1,1,0,0,0,0,0,0,2,2,1,1,0,0,0,0,0,0,0,
-        0,0,1,1,1,1,0,0,0,2,2,1,1,1,1,1,1,1,1,1,
-        0,0,0,0,0,1,1,0,0,0,1,1,1,1,0,0,0,0,0,0,
-        0,0,0,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,2,
-        0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,2,2,2,2,2
-    };
+    Map map1;
+    map1.height = 20;
+    map1.width = 10;
+    map1.data = new int[map1.height * map1.width] {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 3, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 2,
+        1, 1, 1, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 1, 1, 1, 1, 0, 0, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2,
+        0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 2, 2, 2, 2
+        };
+
+    Map map2;
+    map2.height = 30;
+    map2.width = 10;
+    map2.data = new int[map2.height * map2.width] {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        };
+
+    Map allMap[2] = { map1, map2 };
 
     int currentMap = 0;
 
@@ -246,29 +276,31 @@ int main()
     char order;
     bool victory = false;
 
-    afficherMap(map, player, ennemies);
+    afficherMap(allMap[currentMap], player, ennemies);
 
+    // Boucle de jeu
     while (player.health != 0) {
 
         std::cin >> order;
 
-        UpdatePlayer(player, map, order);
+        UpdatePlayer(player, allMap[currentMap], order);
 
-        UpdateEnnemies(ennemies, map);
+        UpdateEnnemies(ennemies, allMap[currentMap]);
 
         Collision(player, ennemies);
+
+        IsOnExit(player, allMap[currentMap], victory);
 
 
 
         system("cls");
 
-        afficherMap(map, player, ennemies);
+        afficherMap(allMap[currentMap], player, ennemies);
 
         if (victory) {
             std::cout << "vicotry" << std::endl;;
             victory = false;
             currentMap += 1;
-            break;
         }
     }
 
