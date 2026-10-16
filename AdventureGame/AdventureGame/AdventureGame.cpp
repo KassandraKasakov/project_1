@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <fstream>
+#include <string>
 
 
 
@@ -132,7 +134,7 @@ void UpdatePlayer(Entity& player, Map map, char order) {
 
     if (IsInMap(newX, newY, map)) {
 
-        int tileType = map.data[getCell(newX, newY, 20)];
+        int tileType = map.data[getCell(newX, newY, map.height)];
         if (tiles[tileType].walkable)
         {
             player.x = newX;
@@ -190,7 +192,7 @@ void UpdateEnnemies(Entity ennemies[], Map map) {
 
             if (IsInMap(newX, newY, map)) {
 
-                int tileType = map.data[getCell(newX, newY, 20)];
+                int tileType = map.data[getCell(newX, newY, map.height)];
                 if (tiles[tileType].walkable)
                 {
                     ennemies[i].x = newX;
@@ -220,12 +222,72 @@ void IsOnExit(Entity player, Map map, bool& victory) {
 }
 
 
+
 int main()
 {
     srand(time(0));
 
-    int rowMax = 10;
-    int columnMax = 20;
+
+
+    // Ouverture fichier
+    std::ifstream f("maps/level_01.txt");
+
+    Map map10;
+
+    // Vérification ouverture fichier
+    if (!f.is_open()) {
+        std::cerr << "Error opening the file!";
+        return 1;
+    }
+
+    std::string s;
+    int lineMax = 0;
+    int columnMax = 0;
+
+    // Lecture fichier et définition dimension map
+    while (std::getline(f, s)) {
+        columnMax += 1;
+        lineMax = s.size();
+    }
+
+    map10.height = lineMax;
+    map10.width = columnMax;
+    map10.data = new int[map10.height * map10.width];
+
+    std::string d;
+    int n = 0;
+    f.clear();
+    f.seekg(0);
+
+        while (std::getline(f, d)) {
+
+            for (int i = 0;i < lineMax;i++) {
+
+                n += 1;
+                for (int t = 0; t < 4; t++) {
+                    if (d[i] == tiles[t].name) {
+                        map10.data[n] = t;
+                    }
+                }
+            }
+        }
+
+    for (int y = 0; y < map10.width; ++y) {
+        for (int x = 0; x < map10.height; ++x) {
+            std::cout << map10.data[y * columnMax + x] << ' ';
+        }
+
+        std::cout << std::endl;
+    }
+
+    // Fermeture fichier
+    f.close();
+
+
+
+
+
+
 
     Map map1;
     map1.height = 20;
@@ -276,26 +338,26 @@ int main()
     char order;
     bool victory = false;
 
-    afficherMap(allMap[currentMap], player, ennemies);
+    afficherMap(map10, player, ennemies);
 
     // Boucle de jeu
     while (player.health != 0) {
 
         std::cin >> order;
 
-        UpdatePlayer(player, allMap[currentMap], order);
+        UpdatePlayer(player, map10, order);
 
-        UpdateEnnemies(ennemies, allMap[currentMap]);
+        UpdateEnnemies(ennemies, map10);
 
         Collision(player, ennemies);
 
-        IsOnExit(player, allMap[currentMap], victory);
+        IsOnExit(player, map10, victory);
 
 
 
         system("cls");
 
-        afficherMap(allMap[currentMap], player, ennemies);
+        afficherMap(map10, player, ennemies);
 
         if (victory) {
             std::cout << "vicotry" << std::endl;;
@@ -307,3 +369,13 @@ int main()
     std::cout << "end game" << std::endl;
     return 0;
 }
+
+
+/*
+int main() {
+
+    
+
+    return 0;
+}
+*/
