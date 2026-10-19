@@ -50,6 +50,65 @@ int getCell(int x, int y, int columnMax)
 }
 
 
+
+Map createMap(int currentMap) {
+
+    std::string path = "maps/level_";
+    path.append(std::to_string(currentMap));
+    path.append(".txt");
+
+    // Ouverture fichier
+    std::ifstream level(path);
+
+    Map map;
+
+    // Vérification ouverture fichier
+    if (!level.is_open()) {
+        std::cerr << "Error opening the file!";
+    }
+
+    std::string s;
+    int lineMax = 0;
+    int columnMax = 0;
+
+    // Lecture fichier et définition dimension map
+    while (std::getline(level, s)) {
+        columnMax += 1;
+        lineMax = s.size();
+    }
+
+    map.height = lineMax;
+    map.width = columnMax;
+    map.data = new int[map.height * map.width];
+
+
+
+    // Nouvelle lecture fichier et définition data
+    std::string d;
+    int n = -1;
+    level.clear();
+    level.seekg(0);
+    while (std::getline(level, d)) {
+
+        for (int i = 0;i < lineMax;i++) {
+
+            n++;
+            for (int t = 0; t < 4; t++) {
+
+                if (d[i] == tiles[t].name) {
+                    map.data[n] = t;
+                }
+            }
+        }
+    }
+
+    // Fermeture fichier
+    level.close();
+
+    return map;
+}
+
+
 void afficherMap(Map map, Entity player, Entity enemies[5]) {
 
     for (int y = 0; y < map.width; ++y) {
@@ -227,103 +286,13 @@ int main()
 {
     srand(time(0));
 
+    Map map;
+
+    int currentMap = 1;
+
+    map = createMap(currentMap);
 
 
-    // Ouverture fichier
-    std::ifstream f("maps/level_01.txt");
-
-    Map map10;
-
-    // Vérification ouverture fichier
-    if (!f.is_open()) {
-        std::cerr << "Error opening the file!";
-        return 1;
-    }
-
-    std::string s;
-    int lineMax = 0;
-    int columnMax = 0;
-
-    // Lecture fichier et définition dimension map
-    while (std::getline(f, s)) {
-        columnMax += 1;
-        lineMax = s.size();
-    }
-
-    map10.height = lineMax;
-    map10.width = columnMax;
-    map10.data = new int[map10.height * map10.width];
-
-    std::string d;
-    int n = 0;
-    f.clear();
-    f.seekg(0);
-
-        while (std::getline(f, d)) {
-
-            for (int i = 0;i < lineMax;i++) {
-
-                n += 1;
-                for (int t = 0; t < 4; t++) {
-                    if (d[i] == tiles[t].name) {
-                        map10.data[n] = t;
-                    }
-                }
-            }
-        }
-
-    for (int y = 0; y < map10.width; ++y) {
-        for (int x = 0; x < map10.height; ++x) {
-            std::cout << map10.data[y * columnMax + x] << ' ';
-        }
-
-        std::cout << std::endl;
-    }
-
-    // Fermeture fichier
-    f.close();
-
-
-
-
-
-
-
-    Map map1;
-    map1.height = 20;
-    map1.width = 10;
-    map1.data = new int[map1.height * map1.width] {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 3, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 2,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 2,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 2,
-        1, 1, 1, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 1, 1, 0, 0, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2,
-        0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 2, 2, 2, 2, 2
-        };
-
-    Map map2;
-    map2.height = 30;
-    map2.width = 10;
-    map2.data = new int[map2.height * map2.width] {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        };
-
-    Map allMap[2] = { map1, map2 };
-
-    int currentMap = 0;
 
     Entity player = { 2, 3, 'H', 1 };
 
@@ -338,31 +307,32 @@ int main()
     char order;
     bool victory = false;
 
-    afficherMap(map10, player, ennemies);
+    afficherMap(map, player, ennemies);
 
     // Boucle de jeu
     while (player.health != 0) {
 
         std::cin >> order;
 
-        UpdatePlayer(player, map10, order);
+        UpdatePlayer(player, map, order);
 
-        UpdateEnnemies(ennemies, map10);
+        UpdateEnnemies(ennemies, map);
 
         Collision(player, ennemies);
 
-        IsOnExit(player, map10, victory);
+        IsOnExit(player, map, victory);
 
 
 
         system("cls");
 
-        afficherMap(map10, player, ennemies);
+        afficherMap(map, player, ennemies);
 
         if (victory) {
             std::cout << "vicotry" << std::endl;;
             victory = false;
             currentMap += 1;
+            map = createMap(currentMap);
         }
     }
 
