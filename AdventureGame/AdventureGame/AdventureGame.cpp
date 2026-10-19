@@ -40,7 +40,7 @@ struct Tile {
 // Tiles
 const Tile ground = { '.' };
 const Tile water = { '~' };
-const Tile mountain = { 'M', false };
+const Tile mountain = { 'A', false };
 const Tile door = { 'E', true, true };
 const Tile lava = { '-' };
 const Tile tall_grass = { '#' };
