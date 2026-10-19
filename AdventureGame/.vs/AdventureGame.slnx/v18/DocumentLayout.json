@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\llebricon\\Documents\\GitHub\\project_1\\AdventureGame\\",
+  "WorkspaceRootPath": "C:\\Users\\lebri\\OneDrive\\Documents\\GitHub\\project_1\\AdventureGame\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D403076C-C263-4E16-8475-5B6994C01977}|AdventureGame\\AdventureGame.vcxproj|C:\\Users\\llebricon\\Documents\\GitHub\\project_1\\AdventureGame\\AdventureGame\\AdventureGame.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "AbsoluteMoniker": "D:0:0:{D403076C-C263-4E16-8475-5B6994C01977}|AdventureGame\\AdventureGame.vcxproj|C:\\Users\\lebri\\OneDrive\\Documents\\GitHub\\project_1\\AdventureGame\\AdventureGame\\AdventureGame.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{D403076C-C263-4E16-8475-5B6994C01977}|AdventureGame\\AdventureGame.vcxproj|solutionrelative:AdventureGame\\AdventureGame.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
@@ -14,21 +14,17 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 0,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
-            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "AdventureGame.cpp",
-              "DocumentMoniker": "C:\\Users\\llebricon\\Documents\\GitHub\\project_1\\AdventureGame\\AdventureGame\\AdventureGame.cpp",
+              "DocumentMoniker": "C:\\Users\\lebri\\OneDrive\\Documents\\GitHub\\project_1\\AdventureGame\\AdventureGame\\AdventureGame.cpp",
               "RelativeDocumentMoniker": "AdventureGame\\AdventureGame.cpp",
-              "ToolTip": "C:\\Users\\llebricon\\Documents\\GitHub\\project_1\\AdventureGame\\AdventureGame\\AdventureGame.cpp",
+              "ToolTip": "C:\\Users\\lebri\\OneDrive\\Documents\\GitHub\\project_1\\AdventureGame\\AdventureGame\\AdventureGame.cpp",
               "RelativeToolTip": "AdventureGame\\AdventureGame.cpp",
-              "ViewState": "AgIAAB8AAAAAAAAAAAAUwDAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAOAAAAAAAAAAAAAAAHsBAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2026-10-16T11:50:15.948Z",
               "EditorCaption": ""
