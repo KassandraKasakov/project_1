@@ -103,27 +103,26 @@ Map CreateMap(int currentMap, Entity& player, Entity ennemies[]) {
 
 
     // Def. Map Data
-    std::string d;
     int n = -1;
     level.clear();
     level.seekg(0);
     int line = 0;
     int currentEnnemy = 0;
 
-    while (std::getline(level, d)) {
+    while (std::getline(level, s)) {
 
         for (int i = 0;i < lineMax;i++) {
 
             n++;
 
             // Detects Player
-            if (d[i] == 'H') {
+            if (s[i] == 'H') {
                 map.data[n] = 0;
                 player.x = i;
                 player.y = line;
             }
             // Detects Ennemy
-            else if (d[i] == 'X') {
+            else if (s[i] == 'X') {
                 map.data[n] = 0;
                 ennemies[currentEnnemy].x = i;
                 ennemies[currentEnnemy].y = line;
@@ -133,7 +132,7 @@ Map CreateMap(int currentMap, Entity& player, Entity ennemies[]) {
             for (int t = 0; t < 4; t++) {
                 
 
-                if (d[i] == tiles[t].name) {
+                if (s[i] == tiles[t].name) {
                     map.data[n] = t;
                 }
             }
@@ -156,19 +155,19 @@ void ShowMap(Map map, Entity player, Entity enemies[], int currentMap) {
             int index = GetCell(x, y, map.height);
 
             // Detects Ennemies
-            bool isenemy = false;
-            int whenenemy;
+            bool isEnemy = false;
+            int whenEnemy;
 
             for (int i = 0; i < 5; i++) {
                 if (x == enemies[i].x and y == enemies[i].y) {
-                    isenemy = true;
-                    whenenemy = i;
+                    isEnemy = true;
+                    whenEnemy = i;
                 }
             }
 
             // Display Ennemies
-            if (isenemy) {
-                std::cout << enemies[whenenemy].name << ' ';
+            if (isEnemy) {
+                std::cout << enemies[whenEnemy].name << ' ';
             }
 
             // Display Player
@@ -178,10 +177,7 @@ void ShowMap(Map map, Entity player, Entity enemies[], int currentMap) {
 
             // Display Map
             else {
-                for (int t = 0; t < 4; t++) {
-                    if (map.data[index] == Tile_Type(t))
-                        std::cout << tiles[t].name << ' ';
-                }
+                std::cout << tiles[map.data[index]].name << ' '; // La ligne ultime ?
             }
         }
         std::cout << std::endl;
@@ -208,11 +204,47 @@ bool IsInMap(int x, int y, Map map) {
 }
 
 
-void UpdatePlayer(Entity& player, Map map, char order) {
+void Collision(Entity& player, Entity ennemies[]) {
+    for (int i = 0; i < 5; i++) {
+        if (player.x == ennemies[i].x and player.y == ennemies[i].y) {
+            player.health -= ennemies[i].damage;
+        }
+    }
+}
+
+
+void OnTile(Entity& player, Map map, bool& victory) {
+    int PlayerCell = GetCell(player.x, player.y, map.height);
+
+    switch (map.data[PlayerCell])
+    {
+    case 0: // Ground
+        player.oxygen = 3;
+        break;
+    case 1: // Water
+        player.oxygen -= 1;
+
+        if (player.oxygen == 0) {
+            player.health = 0;
+        }
+        break;
+    case 2: // Mountain
+        player.oxygen = 3;
+        break;
+    case 3: // Exit
+        player.oxygen = 3;
+        victory = true;
+        break;
+    }
+}
+
+
+void UpdateEntities(Entity& player, Entity ennemies[], Map map, char order, bool& victory) {
 
     int xDir = 0;
     int yDir = 0;
 
+    // Player Part
     switch (order)
     {
     case 'd':
@@ -241,12 +273,8 @@ void UpdatePlayer(Entity& player, Map map, char order) {
             player.y = newY;
         }
     }
-}
 
-
-void UpdateEnnemies(Entity ennemies[], Map map) {
-
-
+    // Ennemies Part
     int random;
     bool isOtherEnnemy = false;
 
@@ -301,41 +329,11 @@ void UpdateEnnemies(Entity ennemies[], Map map) {
             }
         }
     }
-}
 
+    Collision(player, ennemies);
 
-void Collision(Entity& player, Entity ennemies[]) {
-    for (int i = 0; i < 5; i++) {
-        if (player.x == ennemies[i].x and player.y == ennemies[i].y) {
-            player.health -= ennemies[i].damage;
-        }
-    }
-}
+    OnTile(player, map, victory);
 
-
-void OnTile(Entity& player, Map map, bool& victory) {
-    int PlayerCell = GetCell(player.x, player.y, map.height);
-
-    switch (map.data[PlayerCell])
-    {
-    case 0: // Ground
-        player.oxygen = 3;
-        break;
-    case 1: // Water
-        player.oxygen -= 1;
-
-        if (player.oxygen == 0) {
-            player.health = 0;
-        }
-        break;
-    case 2: // Mountain
-        player.oxygen = 3;
-        break;
-    case 3: // Exit
-        player.oxygen = 3;
-        victory = true;
-        break;
-    }
 }
 
 
@@ -384,15 +382,7 @@ int main()
 
         std::cin >> order;
 
-        UpdatePlayer(player, map, order);
-
-        UpdateEnnemies(ennemies, map);
-
-        Collision(player, ennemies);
-
-        OnTile(player, map, victory);
-
-
+        UpdateEntities(player, ennemies, map, order, victory);
 
         system("cls");
 
