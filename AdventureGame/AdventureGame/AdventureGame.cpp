@@ -4,6 +4,8 @@
 #include <fstream>
 #include <string>
 
+#include <curses.h>
+
 
 
 struct Map {
@@ -18,6 +20,7 @@ struct Entity {
     char name;
     int health;
     int damage;
+    int oxygen = 3;
 };
 
 enum Tile_Type
@@ -44,34 +47,50 @@ Tile const tiles[4] = { ground, water, mountain, door };
 
 
 
-int getCell(int x, int y, int columnMax)
+int GetCell(int x, int y, int columnMax)
 {
     return y * columnMax + x;
 }
 
 
+void MapReset(Entity& player, Entity ennemies[]) {
+    player.x = -2;
+    player.y = -2;
+    player.health = 1;
+    player.oxygen = 3;
 
-Map createMap(int currentMap) {
+    for (int i = 0;i < 5;i++) {
+        ennemies[i].x = -10;
+        ennemies[i].y = -10;
+    }
+}
+
+
+Map CreateMap(int currentMap, Entity& player, Entity ennemies[]) {
+
+    Map map;
 
     std::string path = "maps/level_";
     path.append(std::to_string(currentMap));
     path.append(".txt");
 
-    // Ouverture fichier
+    // Opening File
     std::ifstream level(path);
 
-    Map map;
 
-    // Vérification ouverture fichier
+    // If error opening file
     if (!level.is_open()) {
-        std::cerr << "Error opening the file!";
+        std::cerr << "No More Maps!";
+        map.height = 0;
+        map.width = 0;
+        return map;
     }
 
     std::string s;
     int lineMax = 0;
     int columnMax = 0;
 
-    // Lecture fichier et définition dimension map
+    // Def. Map Size
     while (std::getline(level, s)) {
         columnMax += 1;
         lineMax = s.size();
@@ -83,40 +102,60 @@ Map createMap(int currentMap) {
 
 
 
-    // Nouvelle lecture fichier et définition data
+    // Def. Map Data
     std::string d;
     int n = -1;
     level.clear();
     level.seekg(0);
+    int line = 0;
+    int currentEnnemy = 0;
+
     while (std::getline(level, d)) {
 
         for (int i = 0;i < lineMax;i++) {
 
             n++;
+
+            // Detects Player
+            if (d[i] == 'H') {
+                map.data[n] = 0;
+                player.x = i;
+                player.y = line;
+            }
+            // Detects Ennemy
+            else if (d[i] == 'X') {
+                map.data[n] = 0;
+                ennemies[currentEnnemy].x = i;
+                ennemies[currentEnnemy].y = line;
+                currentEnnemy++;
+            }
+
             for (int t = 0; t < 4; t++) {
+                
 
                 if (d[i] == tiles[t].name) {
                     map.data[n] = t;
                 }
             }
         }
+        line++;
     }
 
-    // Fermeture fichier
+    // Closing File
     level.close();
 
     return map;
 }
 
 
-void afficherMap(Map map, Entity player, Entity enemies[5]) {
+void ShowMap(Map map, Entity player, Entity enemies[], int currentMap) {
 
     for (int y = 0; y < map.width; ++y) {
         for (int x = 0; x < map.height; ++x) {
 
-            int index = getCell(x, y, map.height);
+            int index = GetCell(x, y, map.height);
 
-            // Detection enemis
+            // Detects Ennemies
             bool isenemy = false;
             int whenenemy;
 
@@ -127,17 +166,17 @@ void afficherMap(Map map, Entity player, Entity enemies[5]) {
                 }
             }
 
-            // Affichage ennemis
+            // Display Ennemies
             if (isenemy) {
                 std::cout << enemies[whenenemy].name << ' ';
             }
 
-            // Affichage joueur
+            // Display Player
             else if (x == player.x and y == player.y) {
                 std::cout << player.name << ' ';
             }
 
-            // Affichage Map
+            // Display Map
             else {
                 for (int t = 0; t < 4; t++) {
                     if (map.data[index] == Tile_Type(t))
@@ -148,10 +187,12 @@ void afficherMap(Map map, Entity player, Entity enemies[5]) {
         std::cout << std::endl;
     }
 
-    // Affichage externe
+    // External Informations
     std::cout << std::endl;
+    std::cout << "Level " << currentMap << std::endl;
     std::cout << "Coords : " << player.x << ' ' << player.y << std::endl;
     std::cout << "Health : " << player.health << "/1" << std::endl;
+    std::cout << "Oxygen : " << player.oxygen << "/3" << std::endl;
     std::cout << "Next Order : ";
 }
 
@@ -193,7 +234,7 @@ void UpdatePlayer(Entity& player, Map map, char order) {
 
     if (IsInMap(newX, newY, map)) {
 
-        int tileType = map.data[getCell(newX, newY, map.height)];
+        int tileType = map.data[GetCell(newX, newY, map.height)];
         if (tiles[tileType].walkable)
         {
             player.x = newX;
@@ -214,7 +255,7 @@ void UpdateEnnemies(Entity ennemies[], Map map) {
         int xDir = 0;
         int yDir = 0;
 
-        // Direction Aléatoire
+        // Random direction
         random = rand() % 4;
 
         switch (random)
@@ -233,7 +274,7 @@ void UpdateEnnemies(Entity ennemies[], Map map) {
             break;
         }
 
-        // Detection autres ennemis
+        // Detects if there is another ennemy
         for (int k = 0; k < 5; k++) {
             if (k != i) {
                 if (ennemies[k].x == ennemies[i].x + xDir and ennemies[k].y == ennemies[i].y + yDir) {
@@ -251,7 +292,7 @@ void UpdateEnnemies(Entity ennemies[], Map map) {
 
             if (IsInMap(newX, newY, map)) {
 
-                int tileType = map.data[getCell(newX, newY, map.height)];
+                int tileType = map.data[GetCell(newX, newY, map.height)];
                 if (tiles[tileType].walkable)
                 {
                     ennemies[i].x = newX;
@@ -263,7 +304,7 @@ void UpdateEnnemies(Entity ennemies[], Map map) {
 }
 
 
-void Collision(Entity& player, Entity ennemies[5]) {
+void Collision(Entity& player, Entity ennemies[]) {
     for (int i = 0; i < 5; i++) {
         if (player.x == ennemies[i].x and player.y == ennemies[i].y) {
             player.health -= ennemies[i].damage;
@@ -272,44 +313,73 @@ void Collision(Entity& player, Entity ennemies[5]) {
 }
 
 
-void IsOnExit(Entity player, Map map, bool& victory) {
-    int PlayerCell = getCell(player.x, player.y, map.height);
-    if (map.data[PlayerCell] == 3)
+void OnTile(Entity& player, Map map, bool& victory) {
+    int PlayerCell = GetCell(player.x, player.y, map.height);
+
+    switch (map.data[PlayerCell])
     {
+    case 0: // Ground
+        player.oxygen = 3;
+        break;
+    case 1: // Water
+        player.oxygen -= 1;
+
+        if (player.oxygen == 0) {
+            player.health = 0;
+        }
+        break;
+    case 2: // Mountain
+        player.oxygen = 3;
+        break;
+    case 3: // Exit
+        player.oxygen = 3;
         victory = true;
+        break;
     }
 }
 
+
+void GameOver(Entity player) {
+
+    std::cout << '\n' << std::endl;
+    std::cout << "Game Over" << std::endl;
+    if (player.oxygen == 0) {
+        std::cout << "You have drowned!" << std::endl;
+    }
+}
 
 
 int main()
 {
     srand(time(0));
 
+    // Def. variables
     Map map;
 
     int currentMap = 1;
 
-    map = createMap(currentMap);
-
-
-
-    Entity player = { 2, 3, 'H', 1 };
+    Entity player = { -2, -2, 'H', 1 };
 
     Entity ennemies[5] = {
-        {1, 1, 'X', 1, 1},
-        {9, 2, 'X', 1, 1},
-        {2, 8, 'X', 1, 1},
-        {17, 3, 'X', 1, 1},
-        {16, 7, 'X', 1, 1}
+        {-10, -10, 'X', 1, 1},
+        {-10, -10, 'X', 1, 1},
+        {-10, -10, 'X', 1, 1},
+        {-10, -10, 'X', 1, 1},
+        {-10, -10, 'X', 1, 1}
     };
+
+    // Creation and display first map
+    map = CreateMap(currentMap, player, ennemies);
+    if (map.height == 0 and map.width == 0) {
+        return 5;
+    }
+    ShowMap(map, player, ennemies, currentMap);
+
 
     char order;
     bool victory = false;
 
-    afficherMap(map, player, ennemies);
-
-    // Boucle de jeu
+    // Game Loop
     while (player.health != 0) {
 
         std::cin >> order;
@@ -320,32 +390,31 @@ int main()
 
         Collision(player, ennemies);
 
-        IsOnExit(player, map, victory);
+        OnTile(player, map, victory);
 
 
 
         system("cls");
 
-        afficherMap(map, player, ennemies);
+        ShowMap(map, player, ennemies, currentMap);
 
+        // Victory
         if (victory) {
-            std::cout << "vicotry" << std::endl;;
             victory = false;
+
+            // New level
+            MapReset(player, ennemies);
+
             currentMap += 1;
-            map = createMap(currentMap);
+            map = CreateMap(currentMap, player, ennemies);
+            if (map.height == 0 and map.width == 0) {
+                return 5;
+            }
+            system("cls");
+            ShowMap(map, player, ennemies, currentMap);
         }
     }
 
-    std::cout << "end game" << std::endl;
+    GameOver(player);
     return 0;
 }
-
-
-/*
-int main() {
-
-    
-
-    return 0;
-}
-*/
