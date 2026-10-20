@@ -3,6 +3,10 @@
 #include <ctime>
 #include <fstream>
 #include <string>
+#include <chrono>
+#include <thread>
+
+#include <curses.h>
 
 
 
@@ -42,11 +46,11 @@ const Tile ground = { '.' };
 const Tile water = { '~' };
 const Tile mountain = { 'A', false };
 const Tile door = { 'E', true, true };
-const Tile lava = { '-' };
+const Tile lava = { '=' };
 const Tile tall_grass = { '#' };
 
-Tile const tiles[6] = { ground, water, mountain, door, lava, tall_grass };
 
+Tile const tiles[6] = { ground, water, mountain, door, lava, tall_grass };
 
 
 int GetCell(int x, int y, int columnMax)
@@ -233,9 +237,11 @@ void OnTile(Entity& player, Map map, bool& victory) {
         break;
     case Water:
         player.oxygen--;
-
+        // When no oxygen
         if (player.oxygen == 0) {
             player.health = 0;
+            player.x = -2;
+            player.y = -2;
         }
         break;
     case Mountain:
@@ -354,20 +360,10 @@ void UpdateEntities(Entity& player, Entity ennemies[], Map map, char order, bool
 }
 
 
-void GameOver(Entity player) {
-
-    std::cout << '\n' << std::endl;
-    std::cout << "Game Over" << std::endl;
-    if (player.oxygen == 0) {
-        std::cout << "You have drowned!" << std::endl;
-    }
-}
-
-
 void StartingScreen() {
 
     // Opening File
-    std::ifstream start("maps/start.txt");
+    std::ifstream start("menu/start.txt");
 
     std::string line;
 
@@ -382,6 +378,51 @@ void StartingScreen() {
     getchar();
 
     system("cls");
+}
+
+
+void EndingScreen(Entity player, Map map) {
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Ending Animation
+    for (int i = 1;i < 5;i++) {
+
+        system("cls");
+
+        std::string path = "menu/end";
+        path.append(std::to_string(i));
+        path.append(".txt");
+
+
+        // Opening File
+        std::ifstream ending(path);
+
+        std::string line;
+        // Display ending screen
+        while (std::getline(ending, line)) {
+            std::cout << line << std::endl;
+        }
+
+        // Closing File
+        ending.close();
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    std::cout << std::endl;
+    // Ending Explanation
+    if (player.oxygen == 0) {
+        std::cout << "You have drowned!" << std::endl;
+    }
+    else if (map.height == 0 and map.width == 0) {
+        std::cout << "You have conquered the world!" << std::endl;
+    }
+    else {
+        std::cout << "You have died!" << std::endl;
+    }
+
+    getchar();
 }
 
 
@@ -409,6 +450,7 @@ int main()
     // Creation and display first map
     map = CreateMap(currentMap, player, ennemies);
     if (map.height == 0 and map.width == 0) {
+        EndingScreen(player, map);
         return 5;
     }
     ShowMap(map, player, ennemies, currentMap);
@@ -437,14 +479,14 @@ int main()
             currentMap++;
             map = CreateMap(currentMap, player, ennemies);
             if (map.height == 0 and map.width == 0) {
+                EndingScreen(player, map);
                 return 5;
             }
             system("cls");
             ShowMap(map, player, ennemies, currentMap);
         }
     }
-
-    GameOver(player);
+    EndingScreen(player, map);
     return 0;
 
 }
