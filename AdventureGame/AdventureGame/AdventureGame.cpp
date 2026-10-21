@@ -34,7 +34,7 @@ enum Tile_Type
     Door = 3,
     Lava = 4,
     Tall_Grass = 5,
-    Quicksand = 6
+    Quicksand = 6,
 };
 
 struct Tile {
@@ -232,7 +232,7 @@ void Collision(Entity& player, Entity ennemies[]) {
 }
 
 
-void OnTile(Entity& player, Map map, bool& victory) {
+void OnTile(Entity& player, Map map, bool& victory, int currentMap) {
     int PlayerCell = GetCell(player.x, player.y, map.height);
 
     switch (map.data[PlayerCell])
@@ -270,7 +270,7 @@ void OnTile(Entity& player, Map map, bool& victory) {
 }
 
 
-void UpdateEntities(Entity& player, Entity ennemies[], Map map, bool& victory) {
+void UpdateEntities(Entity& player, Entity ennemies[], Map map, bool& victory, int currentMap) {
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -399,7 +399,7 @@ void UpdateEntities(Entity& player, Entity ennemies[], Map map, bool& victory) {
 
     Collision(player, ennemies);
 
-    OnTile(player, map, victory);
+    OnTile(player, map, victory, currentMap);
 
 }
 
@@ -511,7 +511,7 @@ int main()
 
     // Creation and display first map
     map = CreateMap(currentMap, player, ennemies);
-    if (map.height == 0 and map.width == 0) {
+    if (map.name == "null") {
         Victory();
         return 5;
     }
@@ -522,7 +522,7 @@ int main()
     // Game Loop
     while (player.health != 0) {
 
-        UpdateEntities(player, ennemies, map, victory);
+        UpdateEntities(player, ennemies, map, victory, currentMap);
 
         system("cls");
 
@@ -537,7 +537,7 @@ int main()
 
             currentMap++;
             map = CreateMap(currentMap, player, ennemies);
-            if (map.height == 0 and map.width == 0) {
+            if (map.name == "null") {
                 Victory();
                 return 5;
             }
