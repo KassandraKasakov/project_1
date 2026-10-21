@@ -1,0 +1,4 @@
+﻿  AdventureGame.cpp
+C:\Users\llebricon\Documents\GitHub\project_1\AdventureGame\AdventureGame\AdventureGame.cpp(108,28): warning C4267: '=' : conversion de 'size_t' en 'int', perte possible de données
+C:\Users\llebricon\Documents\GitHub\project_1\AdventureGame\AdventureGame\AdventureGame.cpp(493,15): warning C4244: 'argument' : conversion de 'time_t' en 'unsigned int', perte possible de données
+  AdventureGame.vcxproj -> C:\Users\llebricon\Documents\GitHub\project_1\AdventureGame\x64\Debug\AdventureGame.exe
