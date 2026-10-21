@@ -5,12 +5,13 @@
 #include <string>
 #include <chrono>
 #include <thread>
+#include <conio.h>
 
-#include <curses.h>
 
 
 
 struct Map {
+    std::string name = "null";
     int* data;
     int width;
     int height;
@@ -32,12 +33,14 @@ enum Tile_Type
     Mountain = 2,
     Door = 3,
     Lava = 4,
-    Tall_Grass = 5
+    Tall_Grass = 5,
+    Quicksand = 6
 };
 
 struct Tile {
     char name;
     bool walkable = true;
+    bool isSlow = false;
     bool victory = false;
 };
 
@@ -45,12 +48,13 @@ struct Tile {
 const Tile ground = { '.' };
 const Tile water = { '~' };
 const Tile mountain = { 'A', false };
-const Tile door = { 'E', true, true };
+const Tile door = { 'E', true, false, true };
 const Tile lava = { '=' };
 const Tile tall_grass = { '#' };
+const Tile quicksand = { 'O', true, true };
 
 
-Tile const tiles[6] = { ground, water, mountain, door, lava, tall_grass };
+Tile const tiles[7] = { ground, water, mountain, door, lava, tall_grass, quicksand };
 
 
 int GetCell(int x, int y, int columnMax)
@@ -92,14 +96,16 @@ Map CreateMap(int currentMap, Entity& player, Entity ennemies[]) {
         return map;
     }
 
-    std::string s;
+    std::string line;
     int lineMax = 0;
     int columnMax = 0;
 
     // Def. Map Size
-    while (std::getline(level, s)) {
+    getline(level, map.name);
+
+    while (std::getline(level, line)) {
         columnMax++;
-        lineMax = s.size();
+        lineMax = line.size();
     }
 
     map.height = lineMax;
@@ -112,38 +118,37 @@ Map CreateMap(int currentMap, Entity& player, Entity ennemies[]) {
     int n = -1;
     level.clear();
     level.seekg(0);
-    int line = 0;
+    int currentLine = 0;
     int currentEnnemy = 0;
+    getline(level, map.name);
 
-    while (std::getline(level, s)) {
+    while (std::getline(level, line)) {
 
         for (int i = 0;i < lineMax;i++) {
 
             n++;
 
             // Detects Player
-            if (s[i] == 'H') {
+            if (line[i] == 'H') {
                 map.data[n] = 0;
                 player.x = i;
-                player.y = line;
+                player.y = currentLine;
             }
             // Detects Ennemy
-            else if (s[i] == 'X') {
+            else if (line[i] == 'X') {
                 map.data[n] = 0;
                 ennemies[currentEnnemy].x = i;
-                ennemies[currentEnnemy].y = line;
+                ennemies[currentEnnemy].y = currentLine;
                 currentEnnemy++;
             }
 
-            for (int t = 0; t < 6; t++) {
-                
-
-                if (s[i] == tiles[t].name) {
+            for (int t = 0; t < 7; t++) {
+                if (line[i] == tiles[t].name) {
                     map.data[n] = t;
                 }
             }
         }
-        line++;
+        currentLine++;
     }
 
     // Closing File
@@ -199,11 +204,11 @@ void ShowMap(Map map, Entity player, Entity ennemies[], int currentMap) {
 
     // External Informations
     std::cout << std::endl;
-    std::cout << "Level " << currentMap << std::endl;
-    std::cout << "Coords : " << player.x << ' ' << player.y << std::endl;
-    std::cout << "Health : " << player.health << "/1" << std::endl;
-    std::cout << "Oxygen : " << player.oxygen << "/3" << std::endl;
-    std::cout << "Next Order : ";
+    std::cout << "Level " << currentMap << " : " << map.name << std::endl; // Level Name
+    std::cout << "Coords : " << player.x << ' ' << player.y << std::endl; // Player Coords
+    std::cout << "Health : " << player.health << "/1" << std::endl; // Player Health
+    std::cout << "Oxygen : " << player.oxygen << "/3" << std::endl; // Player Oxygen
+    std::cout << "Your turn : ";
 }
 
 
@@ -254,6 +259,9 @@ void OnTile(Entity& player, Map map, bool& victory) {
     case Tall_Grass:
         player.oxygen = 3;
         break;
+    case Quicksand:
+        player.oxygen = 3;
+        break;
     case Door:
         player.oxygen = 3;
         victory = true;
@@ -262,13 +270,17 @@ void OnTile(Entity& player, Map map, bool& victory) {
 }
 
 
-void UpdateEntities(Entity& player, Entity ennemies[], Map map, char order, bool& victory) {
+void UpdateEntities(Entity& player, Entity ennemies[], Map map, bool& victory) {
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    char imput = _getch();
     int xDir = 0;
     int yDir = 0;
+    int slow;
 
     // Player Part
-    switch (order)
+    switch (imput)
     {
     case 'd':
         xDir = 1;
@@ -292,8 +304,24 @@ void UpdateEntities(Entity& player, Entity ennemies[], Map map, char order, bool
         int tileType = map.data[GetCell(newX, newY, map.height)];
         if (tiles[tileType].walkable)
         {
-            player.x = newX;
-            player.y = newY;
+            // If the tile is slow, 1 out of 2 chance of moving
+            slow = rand() % 2;
+            int currentTileType = map.data[GetCell(player.x, player.y, map.height)];
+            if (tiles[currentTileType].isSlow) {
+                switch (slow)
+                {
+                case 0:
+                    player.x = newX;
+                    player.y = newY;
+                    break;
+                case 1:
+                    break;
+                }
+            }
+            else {
+                player.x = newX;
+                player.y = newY;
+            }
         }
     }
 
@@ -346,8 +374,24 @@ void UpdateEntities(Entity& player, Entity ennemies[], Map map, char order, bool
                 int tileType = map.data[GetCell(newX, newY, map.height)];
                 if (tiles[tileType].walkable)
                 {
-                    ennemies[i].x = newX;
-                    ennemies[i].y = newY;
+                    // If the tile is slow, 1 out of 2 chance of moving
+                    slow = rand() % 2;
+                    int currentTileType = map.data[GetCell(ennemies[i].x, ennemies[i].y, map.height)];
+                    if (tiles[currentTileType].isSlow) {
+                        switch (slow)
+                        {
+                        case 0:
+                            ennemies[i].x = newX;
+                            ennemies[i].y = newY;
+                            break;
+                        case 1:
+                            break;
+                        }
+                    }
+                    else {
+                        ennemies[i].x = newX;
+                        ennemies[i].y = newY;
+                    }
                 }
             }
         }
@@ -375,13 +419,14 @@ void StartingScreen() {
     // Closing File
     start.close();
 
-    getchar();
+    char idk;
+    idk = getchar();
 
     system("cls");
 }
 
 
-void EndingScreen(Entity player, Map map) {
+void GameOver(Entity player) {
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -415,14 +460,31 @@ void EndingScreen(Entity player, Map map) {
     if (player.oxygen == 0) {
         std::cout << "You have drowned!" << std::endl;
     }
-    else if (map.height == 0 and map.width == 0) {
-        std::cout << "You have conquered the world!" << std::endl;
-    }
     else {
         std::cout << "You have died!" << std::endl;
     }
 
-    getchar();
+}
+
+
+void Victory() {
+    system("cls");
+
+    // Opening File
+    std::ifstream start("menu/vicotry.txt");
+
+    std::string line;
+
+    // Display starting screen
+    while (std::getline(start, line)) {
+        std::cout << line << std::endl;
+    }
+
+    // Closing File
+    start.close();
+
+    std::cout << "You have conquered the world!" << std::endl;
+
 }
 
 
@@ -450,20 +512,17 @@ int main()
     // Creation and display first map
     map = CreateMap(currentMap, player, ennemies);
     if (map.height == 0 and map.width == 0) {
-        EndingScreen(player, map);
+        Victory();
         return 5;
     }
     ShowMap(map, player, ennemies, currentMap);
 
-    char order;
     bool victory = false;
 
     // Game Loop
     while (player.health != 0) {
 
-        std::cin >> order;
-
-        UpdateEntities(player, ennemies, map, order, victory);
+        UpdateEntities(player, ennemies, map, victory);
 
         system("cls");
 
@@ -479,14 +538,14 @@ int main()
             currentMap++;
             map = CreateMap(currentMap, player, ennemies);
             if (map.height == 0 and map.width == 0) {
-                EndingScreen(player, map);
+                Victory();
                 return 5;
             }
             system("cls");
             ShowMap(map, player, ennemies, currentMap);
         }
     }
-    EndingScreen(player, map);
+    GameOver(player);
     return 0;
 
 }
