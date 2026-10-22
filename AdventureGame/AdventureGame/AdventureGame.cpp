@@ -6,6 +6,7 @@
 #include <chrono>
 #include <thread>
 #include <conio.h>
+#include <windows.h>
 
 
 
@@ -39,19 +40,20 @@ enum Tile_Type
 
 struct Tile {
     char name;
+    int color;
     bool walkable = true;
     bool isSlow = false;
     bool victory = false;
 };
 
 // Tiles
-const Tile ground = { '.' };
-const Tile water = { '~' };
-const Tile mountain = { 'A', false };
-const Tile door = { 'E', true, false, true };
-const Tile lava = { '=' };
-const Tile tall_grass = { '#' };
-const Tile quicksand = { 'O', true, true };
+const Tile ground = { '.', 2 };
+const Tile water = { '~', 3 };
+const Tile mountain = { 'A', 8, false };
+const Tile door = { 'E', 15, true, false, true };
+const Tile lava = { '=', 12 };
+const Tile tall_grass = { '#', 10 };
+const Tile quicksand = { 'O', 6, true, true };
 
 
 Tile const tiles[7] = { ground, water, mountain, door, lava, tall_grass, quicksand };
@@ -160,11 +162,14 @@ Map CreateMap(int currentMap, Entity& player, Entity ennemies[]) {
 
 void ShowMap(Map map, Entity player, Entity ennemies[], int currentMap) {
 
+    HANDLE  hConsole;
+    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
     for (int y = 0; y < map.width; ++y) {
         for (int x = 0; x < map.height; ++x) {
 
             int index = GetCell(x, y, map.height);
-
+            
             // Detects Ennemies
             bool isEnnemy = false;
             int whenEnnemy;
@@ -181,21 +186,25 @@ void ShowMap(Map map, Entity player, Entity ennemies[], int currentMap) {
 
             // Display Ennemies
             if (isEnnemy) {
+                SetConsoleTextAttribute(hConsole, 4);
                 std::cout << ennemies[whenEnnemy].name << ' ';
             }
 
             // Display Player (and if not in tall grass)
             else if (x == player.x and y == player.y) {
                 if (map.data[index] != Tall_Grass) {
+                    SetConsoleTextAttribute(hConsole, 14);
                     std::cout << player.name << ' ';
                 }
                 else {
+                    SetConsoleTextAttribute(hConsole, tiles[Tall_Grass].color);
                     std::cout << tiles[Tall_Grass].name << ' ';
                 }
             }
 
             // Display Map
             else {
+                SetConsoleTextAttribute(hConsole, tiles[map.data[index]].color);
                 std::cout << tiles[map.data[index]].name << ' '; // La ligne ultime ?
             }
         }
@@ -203,6 +212,7 @@ void ShowMap(Map map, Entity player, Entity ennemies[], int currentMap) {
     }
 
     // External Informations
+    SetConsoleTextAttribute(hConsole, 8);
     std::cout << std::endl;
     std::cout << "Level " << currentMap << " : " << map.name << std::endl; // Level Name
     std::cout << "Coords : " << player.x << ' ' << player.y << std::endl; // Player Coords
@@ -497,7 +507,7 @@ int main()
 
     int currentMap = 1;
 
-    Entity player = { -2, -2, 'H', 1 };
+    Entity player = { -2, -2, 'H', 20 };
 
     Entity ennemies[5] = {
         {-10, -10, 'X', 1, 1},
